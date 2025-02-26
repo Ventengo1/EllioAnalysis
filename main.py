@@ -188,54 +188,55 @@ def isElliottWave(df, value, i0, i1, i2, i3, i4, i5, ia, ib, ic):
         return result
 
 
-    # Correct the comparison using bitwise operators
+    # Correct the comparison using bitwise operators and .iloc[0] if necessary
     isi5TheTop = (df[value].iloc[i5] > df[value].iloc[i1]) & (df[value].iloc[i5] > df[value].iloc[i2]) & (df[value].iloc[i5] > df[value].iloc[i3]) & (df[value].iloc[i5] > df[value].iloc[i4])
    
     if not isi5TheTop.any():
         return result
 
 
-    if not df[value].iloc[i1] > df[value].iloc[i0].any():
+    #Example of using .iloc[0] to access a single element for float conversion:
+    if not (df[value].iloc[i1] > df[value].iloc[i0]).any(): #Applying the fix to address the warning.
         return result
 
 
-    if not df[value].iloc[i1] > df[value].iloc[i2]:
+    if not (df[value].iloc[i1] > df[value].iloc[i2]).any():
         return result
 
 
-    if not df[value].iloc[i2] > df[value].iloc[i0]:
+    if not (df[value].iloc[i2] > df[value].iloc[i0]).any():
         return result
 
 
-    if not df[value].iloc[i3] > df[value].iloc[i2]:
+    if not (df[value].iloc[i3] > df[value].iloc[i2]).any():
         return result
 
 
-    w1Len = distance(i0, df[value].iloc[i0], i1, df[value].iloc[i1])
+    w1Len = distance(i0, float(df[value].iloc[i0]), i1, float(df[value].iloc[i1]))  #Example modification
 
 
-    if not df[value].iloc[i2] > df[value].iloc[i0]:
+    if not (df[value].iloc[i2] > df[value].iloc[i0]).any():
         return result
 
 
-    if not df[value].iloc[i3] > df[value].iloc[i4]:
+    if not (df[value].iloc[i3] > df[value].iloc[i4]).any():
         return result
 
 
-    if not df[value].iloc[i4] > df[value].iloc[i2]:
+    if not (df[value].iloc[i4] > df[value].iloc[i2]).any():
         return result
-    w3Len = distance(i2, df[value].iloc[i2], i3, df[value].iloc[i3])
+    w3Len = distance(i2, float(df[value].iloc[i2]), i3, float(df[value].iloc[i3]))
 
 
-    if not df[value].iloc[i4] > df[value].iloc[i1]:
+    if not (df[value].iloc[i4] > df[value].iloc[i1]).any():
         return result
-    if not df[value].iloc[i5] > df[value].iloc[i4]:
+    if not (df[value].iloc[i5] > df[value].iloc[i4]).any():
         return result
 
 
-    if not df[value].iloc[i5] > df[value].iloc[i3]:
+    if not (df[value].iloc[i5] > df[value].iloc[i3]).any():
         return result
-    w5Len = distance(i4, df[value].iloc[i4], i5, df[value].iloc[i5])
+    w5Len = distance(i4, float(df[value].iloc[i4]), i5, float(df[value].iloc[i5]))
 
 
     if (w3Len < w1Len and w3Len < w5Len):
@@ -248,27 +249,27 @@ def isElliottWave(df, value, i0, i1, i2, i3, i4, i5, ia, ib, ic):
     # Correct the comparison using bitwise operators
     isi5TheTop = (df[value].iloc[i5] > df[value].iloc[ia]) & (df[value].iloc[i5] > df[value].iloc[ib]) & (df[value].iloc[i5] > df[value].iloc[ic])
    
-    if not isi5TheTop:
+    if not isi5TheTop.any():
         return result
 
 
-    if not df[value].iloc[i5] > df[value].iloc[ia]:
+    if not (df[value].iloc[i5] > df[value].iloc[ia]).any():
         return result
 
 
-    if not df[value].iloc[i5] > df[value].iloc[ib]:
+    if not (df[value].iloc[i5] > df[value].iloc[ib]).any():
         return result
 
 
-    if not df[value].iloc[ib] > df[value].iloc[ia]:
+    if not (df[value].iloc[ib] > df[value].iloc[ia]).any():
         return result
 
 
-    if not df[value].iloc[ia] > df[value].iloc[ic]:
+    if not (df[value].iloc[ia] > df[value].iloc[ic]).any():
         return result
 
 
-    if not df[value].iloc[ib] > df[value].iloc[ic]:
+    if not (df[value].iloc[ib] > df[value].iloc[ic]).any():
         return result
 
 
@@ -302,6 +303,15 @@ def ElliottWaveDiscovery(df, measure):
 
 
     waves = []
+    counter = 0  # Initialize counter
+    for i0 in minRange(df, 0, len(df)):
+        for i1 in maxRange(df, i0 + 1, len(df)):
+            # ... (other nested loops)
+
+
+            counter += 1  # Increment counter
+            if counter % 50 == 0:  # Check if counter is divisible by 100
+                print(f"Processed {counter} rows")
     for i0 in minRange(df, 0, len(df)):
         for i1 in maxRange(df, i0 + 1, len(df)):
             for i2 in minRange(df, i1 + 1, len(df)):
@@ -520,7 +530,7 @@ def buildWaveChainSet(waves, startwith=9):
 
 if date is None:
     date = dt.datetime.now().strftime("%Y-%m-%d")
-df_source = download(symbol, date, 365 * 5)
+df_source = download(symbol, date, 365 * 1) #was 5, lowered to 1 for faster time
 
 
 df_source["Date"] = pd.to_datetime(df_source["Date"],
@@ -593,4 +603,3 @@ def ElliottWaveFindPattern(df_source, measure, granularity, dateStart,
 
 ElliottWaveFindPattern(df_source, "Close", 7, "2019-03-01", today, today,
                            extremes=False)
-
