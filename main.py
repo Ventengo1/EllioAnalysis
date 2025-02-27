@@ -212,7 +212,13 @@ def isElliottWave(df, value, i0, i1, i2, i3, i4, i5, ia, ib, ic):
         return result
 
 
-    w1Len = distance(i0, float(df[value].iloc[i0]), i1, float(df[value].iloc[i1]))  #Example modification
+    w1Len = distance(i0, float(df[value].iloc[i0].iloc[0]
+                                 if isinstance(df[value].iloc[i0], pd.Series)
+                                 else df[value].iloc[i0]),
+                     i1,
+                     float(df[value].iloc[i1].iloc[0]
+                           if isinstance(df[value].iloc[i1], pd.Series)
+                           else df[value].iloc[i1]))  #Example modification
 
 
     if not (df[value].iloc[i2] > df[value].iloc[i0]).any():
@@ -225,7 +231,13 @@ def isElliottWave(df, value, i0, i1, i2, i3, i4, i5, ia, ib, ic):
 
     if not (df[value].iloc[i4] > df[value].iloc[i2]).any():
         return result
-    w3Len = distance(i2, float(df[value].iloc[i2]), i3, float(df[value].iloc[i3]))
+    w3Len = distance(i2, float(df[value].iloc[i2].iloc[0]
+                                 if isinstance(df[value].iloc[i2], pd.Series)
+                                 else df[value].iloc[i2]),
+                     i3,
+                     float(df[value].iloc[i3].iloc[0]
+                           if isinstance(df[value].iloc[i3], pd.Series)
+                           else df[value].iloc[i3]))
 
 
     if not (df[value].iloc[i4] > df[value].iloc[i1]).any():
@@ -236,7 +248,13 @@ def isElliottWave(df, value, i0, i1, i2, i3, i4, i5, ia, ib, ic):
 
     if not (df[value].iloc[i5] > df[value].iloc[i3]).any():
         return result
-    w5Len = distance(i4, float(df[value].iloc[i4]), i5, float(df[value].iloc[i5]))
+    w5Len = distance(i4, float(df[value].iloc[i4].iloc[0]
+                                 if isinstance(df[value].iloc[i4], pd.Series)
+                                 else df[value].iloc[i4]),
+                     i5,
+                     float(df[value].iloc[i5].iloc[0]
+                           if isinstance(df[value].iloc[i5], pd.Series)
+                           else df[value].iloc[i5]))
 
 
     if (w3Len < w1Len and w3Len < w5Len):
@@ -279,6 +297,8 @@ def isElliottWave(df, value, i0, i1, i2, i3, i4, i5, ia, ib, ic):
     return result
 
 
+
+
 def ElliottWaveDiscovery(df, measure):
 
 
@@ -306,14 +326,6 @@ def ElliottWaveDiscovery(df, measure):
     counter = 0  # Initialize counter
     for i0 in minRange(df, 0, len(df)):
         for i1 in maxRange(df, i0 + 1, len(df)):
-            # ... (other nested loops)
-
-
-            counter += 1  # Increment counter
-            if counter % 50 == 0:  # Check if counter is divisible by 100
-                print(f"Processed {counter} rows")
-    for i0 in minRange(df, 0, len(df)):
-        for i1 in maxRange(df, i0 + 1, len(df)):
             for i2 in minRange(df, i1 + 1, len(df)):
                 for i3 in maxRange(df, i2 + 1, len(df)):
                     for i4 in minRange(df, i3 + 1, len(df)):
@@ -338,6 +350,11 @@ def ElliottWaveDiscovery(df, measure):
                                             if not wave in waves:
                                                 waves.append(wave)
                                                 print(wave)
+
+
+                            counter += 1  # Increment counter
+                            if counter % 50 == 0:  # Check if counter is divisible by 100
+                                print(f"Processed {counter} rows")
 
 
     return waves
@@ -368,7 +385,7 @@ def draw_wave(df, df_waves, w):
     ax.plot(df_waves['Close'], 'ko', markevery=None)
 
 
-    df_waves["wave"] = None
+    df_waves.loc[:, "wave"] = None #changed to df.loc
     for i in range(0, len(w)):
         df_waves['wave'].iat[w[i]] = df_waves['Close'].iat[w[i]]
 
@@ -447,12 +464,12 @@ def line(wa, wb, x):
 def elliottWaveLinearRegressionError(df_waves, w, value):
     diffquad = 0
     for i in range(1, len(w)):
-        wa = [w[i - 1], df_waves[value].iat[w[i - 1]]]
-        wb = [w[i], df_waves[value].iat[w[i]]]
+        wa = [w[i - 1], df_waves[value].iloc[w[i - 1], df_waves.columns.get_loc(value)]]  # Modified line using iloc instead  # Print values #col error
+        wb = [w[i], df_waves[value].iloc[w[i], df_waves.columns.get_loc(value)]]  # Modified line using iloc instead  # Print values
 
 
         for xindex in range(wa[0], wb[0]):
-            yindex = df_waves[value].iat[xindex]
+            yindex = df_waves[value].iat[xindex, df_waves.columns.get_loc(value)]
             yline = line(wa, wb, xindex)
 
 
@@ -530,11 +547,10 @@ def buildWaveChainSet(waves, startwith=9):
 
 if date is None:
     date = dt.datetime.now().strftime("%Y-%m-%d")
-df_source = download(symbol, date, 365 * 1) #was 5, lowered to 1 for faster time
+df_source = download(symbol, date, 365)
 
 
-df_source["Date"] = pd.to_datetime(df_source["Date"],
-                                  infer_datetime_format=True)
+df_source["Date"] = pd.to_datetime(df_source["Date"]) #removed infer...
 df_source.set_index("Date")
 
 
