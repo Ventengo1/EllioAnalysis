@@ -420,6 +420,43 @@ def buildWaveChainSet(waves, startwith=9):
             addList(list, wavelist)
     return list
 
+def check_divergence(df, price_col='Close', indicator_col='volume', window=20):
+
+    """
+    Checks for positive and negative divergence between price and an indicator.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing price and indicator data.
+        price_col (str): Name of the price column.
+        indicator_col (str): Name of the indicator column.
+        window (int): Window size for rolling calculations.
+
+    Returns:
+        pd.DataFrame: Original DataFrame with 'divergence' column added.
+    """
+    
+    df['price_rolling_max'] = df[price_col].rolling(window).max()
+    df['price_rolling_min'] = df[price_col].rolling(window).min()
+    df['indicator_rolling_max'] = df[indicator_col].rolling(window).max()
+    df['indicator_rolling_min'] = df[indicator_col].rolling(window).min()
+
+    df['divergence'] = 0  # Initialize divergence column
+
+    # Check for positive divergence
+    df.loc[(df[price_col] > df['price_rolling_max']) &
+           (df[indicator_col] < df['indicator_rolling_max']),
+           'divergence'] = 1
+
+    # Check for negative divergence
+    df.loc[(df[price_col] < df['price_rolling_min']) &
+           (df[indicator_col] > df['indicator_rolling_min']),
+           'divergence'] = -1
+
+    df = df.drop(columns=['price_rolling_max', 'price_rolling_min',
+                          'indicator_rolling_max', 'indicator_rolling_min'])
+
+    return df
+
 
 # %%
 
@@ -439,6 +476,9 @@ df_source.set_index("Date")
 # %%
 def ElliottWaveFindPattern(df_source, measure, granularity, dateStart,
                            dateEnd, today, extremes=True):
+  
+    # Call check_divergence to detect divergence
+    df_source = check_divergence(df_source)
 
     mask = (dateStart <= df_source.Date) & (df_source.Date <= dateEnd)
     df = df_source.loc[mask]
@@ -482,7 +522,7 @@ def ElliottWaveFindPattern(df_source, measure, granularity, dateStart,
 
         draw_wave(df, df_samples, result)
 
-        # Add Buy/Sell/Hold Logic (Simplified Example)
+        # Add Buy/Sell/Hold Logic
         if len(result) >= 9:  # Assuming 9 points represent a complete pattern
             # Check the trend of the last wave (wave 5)
             # Assuming result[4] and result[5] are single indices
